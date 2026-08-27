@@ -1,10 +1,4 @@
-const { Resend } = require('resend');
-
-// Initialize Resend client if API key is provided
-let resend = null;
-if (process.env.RESEND_API_KEY) {
-  resend = new Resend(process.env.RESEND_API_KEY);
-}
+const nodemailer = require('nodemailer');
 
 /**
  * Sends an email notification
@@ -13,27 +7,24 @@ if (process.env.RESEND_API_KEY) {
  * @param {string} htmlContent - HTML formatted email body
  */
 const sendEmail = async (to, subject, htmlContent) => {
-  if (!resend) {
-    console.log(`[Email Service - Simulated] To: ${to} | Subject: "${subject}"`);
-    return { simulated: true, success: true };
-  }
-
   try {
-    const fromAddress = process.env.RESEND_FROM || 'noreply.connectserve@gmail.com';
-    const { data, error } = await resend.emails.send({
-      from: `ConnectServe Community <${fromAddress}>`,
-      to: [to],
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'noreply.connectserve@gmail.com',
+        pass: 'jpphjqqwqaphxihk',
+      },
+    });
+
+    const info = await transporter.sendMail({
+      from: `"ConnectServe Community" <noreply.connectserve@gmail.com>`,
+      to,
       subject,
       html: htmlContent,
     });
 
-    if (error) {
-      console.error('[Email Service Error]', error.message || error);
-      return { success: false, error: error.message || JSON.stringify(error) };
-    }
-
-    console.log(`[Email Service] Message sent successfully. ID: ${data?.id}`);
-    return { success: true, messageId: data?.id };
+    console.log(`[Email Service] Message sent successfully. ID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('[Email Service Error]', error.message);
     return { success: false, error: error.message };
