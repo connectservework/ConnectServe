@@ -11,13 +11,15 @@ const sendEmail = async (to, subject, htmlContent) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'noreply.connectserve@gmail.com',
-        pass: 'jpphjqqwqaphxihk',
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
     });
 
+    const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply.connectserve@gmail.com';
+
     const info = await transporter.sendMail({
-      from: `"ConnectServe Community" <noreply.connectserve@gmail.com>`,
+      from: `"ConnectServe Community" <${fromAddress}>`,
       to,
       subject,
       html: htmlContent,
