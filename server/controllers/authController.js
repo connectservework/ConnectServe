@@ -291,26 +291,21 @@ const forgotPassword = async (req, res, next) => {
       return sendError(res, 'No account found with that email address.', 404);
     }
 
-    // Generate 6-digit reset code / token
-    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const resetTokenHash = crypto.createHash('sha256').update(resetCode).digest('hex');
+    // Generate random temporary password
+    const tempPassword = 'CS-' + crypto.randomBytes(4).toString('hex').toUpperCase() + crypto.randomInt(100, 999);
 
-    user.resetPasswordToken = resetTokenHash;
-    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 mins validity
-    await user.save();
-
-    const emailSubject = 'Password Reset Request - ConnectServe';
+    const emailSubject = 'Your Temporary Password - ConnectServe';
     const emailBody = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-        <h2 style="color: #059669;">Reset Your Password</h2>
+        <h2 style="color: #059669;">Your Account Password Reset</h2>
         <p>Hi <strong>${user.name}</strong>,</p>
-        <p>You requested a password reset for your ConnectServe account.</p>
-        <p>Your password reset code is:</p>
+        <p>You requested a password recovery for your ConnectServe account.</p>
+        <p>Your temporary password is:</p>
         <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0;">
-          <span style="font-size: 28px; font-weight: bold; letter-spacing: 5px; color: #166534;">${resetCode}</span>
+          <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #166534;">${tempPassword}</span>
         </div>
-        <p>This code will expire in 15 minutes.</p>
-        <p style="color: #64748b; font-size: 12px; margin-top: 25px;">If you did not request this, please ignore this email.</p>
+        <p>You can now log in using this temporary password and update it anytime in your Profile settings.</p>
+        <p style="color: #64748b; font-size: 12px; margin-top: 25px;">If you did not request this, please log in and change your password in your Profile.</p>
       </div>
     `;
 
@@ -320,7 +315,12 @@ const forgotPassword = async (req, res, next) => {
       return sendError(res, `Failed to send email: ${emailResult.error || 'SMTP delivery error'}`, 500);
     }
 
-    return sendSuccess(res, `Password reset code sent to ${user.email}.`);
+    user.password = tempPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    return sendSuccess(res, `A temporary password has been sent to ${user.email}. Use it to log in and change it later in your profile.`);
   } catch (error) {
     next(error);
   }
@@ -368,5 +368,4 @@ module.exports = {
   updateEmail,
   updateMobile,
   forgotPassword,
-  resetPassword,
 };

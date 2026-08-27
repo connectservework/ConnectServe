@@ -7,9 +7,7 @@ const {
   refreshToken,
   updatePassword,
   updateEmail,
-  updateMobile,
   forgotPassword,
-  resetPassword,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const { validate } = require('../middleware/validationMiddleware');
@@ -66,17 +64,6 @@ router.put(
   updateEmail
 );
 
-router.put(
-  '/mobile',
-  protect,
-  [
-    body('newMobile').notEmpty().withMessage('Please enter a valid mobile number'),
-    body('password').notEmpty().withMessage('Current password is required'),
-    validate,
-  ],
-  updateMobile
-);
-
 
 router.post(
   '/forgot-password',
@@ -85,17 +72,6 @@ router.post(
     validate,
   ],
   forgotPassword
-);
-
-router.post(
-  '/reset-password',
-  [
-    body('email').isEmail().withMessage('Please enter a valid email address'),
-    body('resetCode').notEmpty().withMessage('Reset code is required'),
-    body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-    validate,
-  ],
-  resetPassword
 );
 
 module.exports = router;

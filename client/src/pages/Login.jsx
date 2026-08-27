@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { authService } from '../services/authService';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
-import { Mail, Lock, Sparkles, User, Building2, Shield, ArrowRight, KeyRound } from 'lucide-react';
+import { Mail, Lock, Sparkles, User, Building2, Shield, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const Login = () => {
@@ -20,12 +20,8 @@ export const Login = () => {
 
   // Forgot password modal state
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [forgotStep, setForgotStep] = useState(1); // 1: enter email, 2: enter code & new password
   const [forgotEmail, setForgotEmail] = useState('');
-  const [resetCode, setResetCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
   const [isSendingCode, setIsSendingCode] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,47 +60,14 @@ export const Login = () => {
     try {
       const res = await authService.forgotPassword(forgotEmail);
       if (res.success) {
-        toast.success(res.message || 'Reset code sent to your email!');
-        setForgotStep(2);
+        toast.success(res.message || 'Temporary password sent to your email!');
+        setIdentifier(forgotEmail);
+        setShowForgotModal(false);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to send reset code.');
+      toast.error(err.response?.data?.message || 'Failed to send password.');
     } finally {
       setIsSendingCode(false);
-    }
-  };
-
-  const handleResetPasswordSubmit = async (e) => {
-    e.preventDefault();
-    if (!resetCode || !newPassword) {
-      toast.error('Please provide both the reset code and a new password.');
-      return;
-    }
-    if (newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters long.');
-      return;
-    }
-    setIsResetting(true);
-    try {
-      const res = await authService.resetPassword({
-        email: forgotEmail,
-        resetCode,
-        newPassword,
-      });
-      if (res.success) {
-        toast.success('Password reset successfully! Please log in.');
-        setShowForgotModal(false);
-        setForgotStep(1);
-        setIdentifier(forgotEmail);
-        setPassword('');
-        setForgotEmail('');
-        setResetCode('');
-        setNewPassword('');
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Invalid or expired code.');
-    } finally {
-      setIsResetting(false);
     }
   };
 
@@ -190,7 +153,6 @@ export const Login = () => {
                 type="button"
                 onClick={() => {
                   setForgotEmail(identifier.includes('@') ? identifier : '');
-                  setForgotStep(1);
                   setShowForgotModal(true);
                 }}
                 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
@@ -236,91 +198,38 @@ export const Login = () => {
       <Modal
         isOpen={showForgotModal}
         onClose={() => setShowForgotModal(false)}
-        title="Reset Password"
+        title="Forgot Password"
         size="md"
       >
-        {forgotStep === 1 ? (
-          <form onSubmit={handleSendResetCode} className="space-y-4">
-            <p className="text-xs text-slate-500">
-              Enter the email address associated with your account. We will send you a 6-digit verification code to reset your password.
-            </p>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Registered Email Address
-              </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  required
-                  placeholder="name@example.com"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-                <Mail className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-              </div>
+        <form onSubmit={handleSendResetCode} className="space-y-4">
+          <p className="text-xs text-slate-500">
+            Enter your registered email address. We will send a temporary password to your email so you can log in and update your password in Profile.
+          </p>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Registered Email Address
+            </label>
+            <div className="relative">
+              <input
+                type="email"
+                required
+                placeholder="name@example.com"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              <Mail className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="ghost" size="sm" onClick={() => setShowForgotModal(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary" size="sm" isLoading={isSendingCode}>
-                Send Reset Code
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
-            <p className="text-xs text-slate-500">
-              A 6-digit code has been sent to <strong>{forgotEmail}</strong>. Enter the code and your new password below.
-            </p>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                6-Digit Reset Code
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  placeholder="123456"
-                  maxLength={6}
-                  value={resetCode}
-                  onChange={(e) => setResetCode(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono tracking-widest"
-                />
-                <KeyRound className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                New Password
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-                <Lock className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-              </div>
-            </div>
-            <div className="flex justify-between items-center pt-2">
-              <button
-                type="button"
-                onClick={() => setForgotStep(1)}
-                className="text-xs text-slate-500 hover:underline"
-              >
-                ← Back to email
-              </button>
-              <Button type="submit" variant="primary" size="sm" isLoading={isResetting}>
-                Reset Password
-              </Button>
-            </div>
-          </form>
-        )}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setShowForgotModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" size="sm" isLoading={isSendingCode}>
+              Send Password To Mail
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );
