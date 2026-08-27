@@ -1,47 +1,10 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-const getTransporter = () => {
-  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  if (
-    !user ||
-    !pass ||
-    user === 'your_smtp_user'
-  ) {
-    return null;
-  }
-
-  const cleanPass = pass.replace(/\s+/g, '');
-  const isGmail = host.includes('gmail') || process.env.SMTP_SERVICE === 'gmail';
-
-  if (isGmail) {
-    return nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user,
-        pass: cleanPass,
-      },
-    });
-  }
-
-  const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const isSecure = process.env.SMTP_SECURE === 'true' || port === 465;
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: isSecure,
-    auth: {
-      user,
-      pass: cleanPass,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
-};
+// Initialize Resend client if API key is provided
+let resend = null;
+if (process.env.RESEND_API_KEY) {
+  resend = new Resend(process.env.RESEND_API_KEY);
+}
 
 /**
  * Sends an email notification
@@ -50,21 +13,27 @@ const getTransporter = () => {
  * @param {string} htmlContent - HTML formatted email body
  */
 const sendEmail = async (to, subject, htmlContent) => {
-  const transporter = getTransporter();
-  if (!transporter) {
+  if (!resend) {
     console.log(`[Email Service - Simulated] To: ${to} | Subject: "${subject}"`);
     return { simulated: true, success: true };
   }
 
   try {
-    const info = await transporter.sendMail({
-      from: `"ConnectServe Community" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
-      to,
+    const fromAddress = process.env.RESEND_FROM || 'noreply.connectserve@gmail.com';
+    const { data, error } = await resend.emails.send({
+      from: `ConnectServe Community <${fromAddress}>`,
+      to: [to],
       subject,
       html: htmlContent,
     });
-    console.log(`[Email Service] Message sent: %s`, info.messageId);
-    return { success: true, messageId: info.messageId };
+
+    if (error) {
+      console.error('[Email Service Error]', error.message || error);
+      return { success: false, error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`[Email Service] Message sent successfully. ID: ${data?.id}`);
+    return { success: true, messageId: data?.id };
   } catch (error) {
     console.error('[Email Service Error]', error.message);
     return { success: false, error: error.message };
