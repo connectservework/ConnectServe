@@ -1,23 +1,41 @@
 const nodemailer = require('nodemailer');
 
 const getTransporter = () => {
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
   if (
-    !process.env.SMTP_HOST ||
-    !process.env.SMTP_USER ||
-    !process.env.SMTP_PASS ||
-    process.env.SMTP_USER === 'your_smtp_user'
+    !user ||
+    !pass ||
+    user === 'your_smtp_user'
   ) {
     return null;
   }
 
+  const cleanPass = pass.replace(/\s+/g, '');
+  const isGmail = host.includes('gmail') || process.env.SMTP_SERVICE === 'gmail';
+
+  if (isGmail) {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user,
+        pass: cleanPass,
+      },
+    });
+  }
+
+  const port = parseInt(process.env.SMTP_PORT || '587', 10);
+  const isSecure = process.env.SMTP_SECURE === 'true' || port === 465;
+
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: process.env.SMTP_SECURE === 'true',
-    requireTLS: true,
+    host,
+    port,
+    secure: isSecure,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : '',
+      user,
+      pass: cleanPass,
     },
     tls: {
       rejectUnauthorized: false,
