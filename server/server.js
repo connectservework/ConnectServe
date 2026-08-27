@@ -34,7 +34,7 @@ const server = http.createServer(app);
 // Initialize Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: 'https://connectserve99.web.app',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
@@ -79,7 +79,7 @@ app.use(
   })
 );
 app.use(cors({
-  origin: '*',
+  origin: 'https://connectserve99.web.app',
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
