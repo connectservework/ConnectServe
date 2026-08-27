@@ -62,9 +62,11 @@ export const EditProfile = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Security Account state (Change Email & Change Password)
+  // Security Account state (Change Email, Change Mobile, & Change Password)
   const [emailForm, setEmailForm] = useState({ newEmail: user?.email || '', currentPassword: '' });
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
+  const [mobileForm, setMobileForm] = useState({ newMobile: user?.mobileNumber || '', currentPassword: '' });
+  const [isUpdatingMobile, setIsUpdatingMobile] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
@@ -157,6 +159,31 @@ export const EditProfile = () => {
       setIsUpdatingEmail(false);
     }
   };
+
+  const handleUpdateMobile = async (e) => {
+    e.preventDefault();
+    if (!mobileForm.newMobile || !mobileForm.currentPassword) {
+      toast.error('Please enter new mobile number and current password.');
+      return;
+    }
+    setIsUpdatingMobile(true);
+    try {
+      const res = await authService.updateMobile({
+        newMobile: mobileForm.newMobile,
+        password: mobileForm.currentPassword,
+      });
+      if (res.success) {
+        toast.success('Mobile number updated successfully!');
+        if (res.data?.user) updateLocalUser(res.data.user);
+        setMobileForm(prev => ({ ...prev, currentPassword: '' }));
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update mobile number.');
+    } finally {
+      setIsUpdatingMobile(false);
+    }
+  };
+
 
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
@@ -471,6 +498,42 @@ export const EditProfile = () => {
           <div className="flex justify-end">
             <Button type="submit" variant="secondary" size="sm" isLoading={isUpdatingEmail}>
               Update Email
+            </Button>
+          </div>
+        </form>
+
+        {/* Change Mobile Form */}
+        <form onSubmit={handleUpdateMobile} className="space-y-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <Phone className="w-4 h-4 text-emerald-600" /> Change Mobile Number
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>New Mobile Number *</label>
+              <input
+                type="tel"
+                required
+                value={mobileForm.newMobile}
+                onChange={(e) => setMobileForm(prev => ({ ...prev, newMobile: e.target.value.replace(/\D/g, '') }))}
+                className={inputClass}
+                placeholder="9876543210"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Current Password (to confirm) *</label>
+              <input
+                type="password"
+                required
+                value={mobileForm.currentPassword}
+                onChange={(e) => setMobileForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                className={inputClass}
+                placeholder="••••••••"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit" variant="secondary" size="sm" isLoading={isUpdatingMobile}>
+              Update Mobile
             </Button>
           </div>
         </form>

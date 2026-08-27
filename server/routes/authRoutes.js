@@ -7,6 +7,7 @@ const {
   refreshToken,
   updatePassword,
   updateEmail,
+  updateMobile,
   forgotPassword,
   resetPassword,
 } = require('../controllers/authController');
@@ -64,6 +65,18 @@ router.put(
   ],
   updateEmail
 );
+
+router.put(
+  '/mobile',
+  protect,
+  [
+    body('newMobile').notEmpty().withMessage('Please enter a valid mobile number'),
+    body('password').notEmpty().withMessage('Current password is required'),
+    validate,
+  ],
+  updateMobile
+);
+
 
 router.post(
   '/forgot-password',

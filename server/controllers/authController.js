@@ -242,6 +242,40 @@ const updateEmail = async (req, res, next) => {
   }
 };
 
+// @desc    Update mobile number
+// @route   PUT /api/auth/mobile
+// @access  Private
+const updateMobile = async (req, res, next) => {
+  try {
+    const { newMobile, password } = req.body;
+    if (!newMobile || !password) {
+      return sendError(res, 'Please provide both new mobile number and your current password.', 400);
+    }
+
+    const cleanMobile = newMobile.trim();
+    const existingUser = await User.findOne({ mobileNumber: cleanMobile, _id: { $ne: req.user._id } });
+    if (existingUser) {
+      return sendError(res, 'An account with this mobile number already exists.', 400);
+    }
+
+    const user = await User.findById(req.user._id).select('+password');
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return sendError(res, 'Password confirmation failed. Incorrect password.', 400);
+    }
+
+    user.mobileNumber = cleanMobile;
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    return sendSuccess(res, 'Mobile number updated successfully.', { user: userObj });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Forgot Password - Send Reset Token via Email
 // @route   POST /api/auth/forgot-password
 // @access  Public
@@ -332,6 +366,7 @@ module.exports = {
   refreshToken,
   updatePassword,
   updateEmail,
+  updateMobile,
   forgotPassword,
   resetPassword,
 };
