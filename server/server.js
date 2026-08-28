@@ -31,10 +31,19 @@ const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 const server = http.createServer(app);
 
+// Define CORS allowed origins
+const allowedOrigins = [
+  'https://connectserve99.web.app',
+  'https://connectserve99.firebaseapp.com',
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:3000'
+].filter(Boolean);
+
 // Initialize Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: 'https://connectserve99.web.app',
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
@@ -79,7 +88,7 @@ app.use(
   })
 );
 app.use(cors({
-  origin: 'https://connectserve99.web.app',
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
