@@ -11,6 +11,7 @@ const { Server } = require('socket.io');
 // Load environment variables (supports root and server dirs)
 dotenv.config();
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const { connectDB } = require('./config/db');
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
