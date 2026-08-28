@@ -197,4 +197,5 @@ if (require.main === module) {
   startServer();
 }
 
-module.exports = { app, server, io, startServer };
+// Export the Express app for Vercel
+module.exports = app;

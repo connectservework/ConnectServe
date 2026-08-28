@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 let memoryServer = null;
 
 const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
   try {
     let mongoUri = process.env.MONGODB_URI;
 
