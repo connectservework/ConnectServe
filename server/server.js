@@ -151,10 +151,7 @@ io.on('connection', (socket) => {
 
 // Serve static frontend in production or if build exists
 const clientDistPath = path.join(__dirname, '../client/dist');
-console.log(`[ConnectServe Startup] clientDistPath resolved to: ${clientDistPath}`);
-console.log(`[ConnectServe Startup] clientDistPath exists? ${fs.existsSync(clientDistPath)}`);
 if (fs.existsSync(clientDistPath)) {
-  console.log(`[ConnectServe Startup] Serving static files from: ${clientDistPath}`);
   app.use(express.static(clientDistPath));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
@@ -162,8 +159,6 @@ if (fs.existsSync(clientDistPath)) {
     }
     res.sendFile(path.join(clientDistPath, 'index.html'));
   });
-} else {
-  console.warn(`[ConnectServe Startup] WARNING: clientDistPath not found! Frontend will NOT be served.`);
 }
 
 // Error handling middleware
