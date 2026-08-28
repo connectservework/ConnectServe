@@ -24,8 +24,10 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || 
-      (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') : window.location.origin);
+    const rawSocketUrl = (import.meta.env.VITE_SOCKET_URL || '').trim();
+    const rawApiUrl = (import.meta.env.VITE_API_URL || '').trim();
+    const socketUrl = rawSocketUrl ? rawSocketUrl.replace(/\/+$/, '') : 
+      (rawApiUrl ? rawApiUrl.replace(/\/api\/?$/, '').replace(/\/+$/, '') : window.location.origin);
     const newSocket = io(socketUrl, {
       query: { userId: user._id },
       transports: ['websocket', 'polling'],

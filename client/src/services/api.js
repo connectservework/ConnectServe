@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const RAW_API_URL = import.meta.env.VITE_API_URL || '';
+const RAW_API_URL = (import.meta.env.VITE_API_URL || '').trim();
 const API_URL = RAW_API_URL.replace(/\/+$/, '');
 
 const api = axios.create({

@@ -33,7 +33,9 @@ const server = http.createServer(app);
 
 // Define CORS allowed origins
 const allowedOrigins = [
+  'https://connectserve.onrender.com',
   'https://connectserve99.web.app',
+  'https://server-eight-psi-49.vercel.app',
   'https://connectserve99.firebaseapp.com',
   process.env.CLIENT_URL,
   'http://localhost:5173',
